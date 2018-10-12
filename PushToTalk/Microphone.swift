@@ -9,6 +9,7 @@
 import Cocoa
 import AudioToolbox
 
+
 class Microphone {
     
     typealias StatusUpdate = (MicrophoneStatus) -> ()
@@ -83,10 +84,31 @@ extension Microphone {
     }
 }
 
+var previousEpoc=NSDate().timeIntervalSince1970
+var doubleclick=false
+
 // MARK - Event Handling
 extension Microphone {
+    
     internal func handleFlagChangedEvent(_ theEvent: NSEvent!) {
         guard theEvent.keyCode == 61 else { return }
-        self.status = (theEvent.modifierFlags.contains(.option)) ? .Speaking : .Muted
+        
+        if (theEvent.modifierFlags.contains(.option)) {
+        
+            let timeInterval = NSDate().timeIntervalSince1970
+            let timediff = timeInterval-previousEpoc
+            NSLog("diff "+String(timediff))
+            previousEpoc=timeInterval
+            doubleclick = timediff < 0.2
+            
+            self.status = .Speaking
+        }
+        else {
+            if ( !doubleclick ) {
+                self.status = .Muted
+                doubleclick=false
+            
+            }
+        }
     }
 }
